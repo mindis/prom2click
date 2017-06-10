@@ -1,0 +1,4 @@
+package: github.com/s4z/prom2click
+import:
+- package: github.com/spf13/viper
+- package: github.com/Sirupsen/logrus
