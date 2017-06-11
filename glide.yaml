@@ -1,4 +1,20 @@
 package: github.com/s4z/prom2click
 import:
-- package: github.com/spf13/viper
-- package: github.com/Sirupsen/logrus
+- package: github.com/golang/protobuf
+  subpackages:
+  - proto
+- package: github.com/golang/snappy
+- package: github.com/prometheus/client_golang
+  version: v0.8.0
+  subpackages:
+  - prometheus
+- package: github.com/prometheus/common
+  subpackages:
+  - log
+  - model
+- package: github.com/prometheus/prometheus
+  subpackages:
+  - storage/remote
+- package: gopkg.in/tylerb/graceful.v1
+  version: v1.2.15
+- package: github.com/kshvakov/clickhouse
