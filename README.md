@@ -1,8 +1,9 @@
 # prom2click
 
-Prom2click is a Prometheus remote storage adapter for Clickhouse. This project is in very early stages, beta testers are welcome :)
+Prom2click is a Prometheus remote storage adapter for Clickhouse. This project is in the early stages, beta testers are welcome :)
 
-It's in a working state and writing metrics into Clickhouse in configurable batch sizes.
+It's in a working state and writing metrics into Clickhouse in configurable batch sizes with a very small number of metrics (eg. Prometheus scraping itself).
+
 
 ```console
 prom2click  --help
@@ -56,7 +57,7 @@ Usage of ./prom2click:
         ```
     * For a more resiliant setup you could setup shards, replicas and a distributed table
         * setup a Zookeeper cluster (or zetcd)
-        * eg. for each cickhouse shard run two+ clickhouse servers and setup a ReplicatedMergeTree on each with the same zk path and uniq replicas (eg. replica => the servers fqdn)
+        * eg. for each clickhouse shard run two+ clickhouse servers and setup a ReplicatedMergeTree on each with the same zk path and uniq replicas (eg. replica => the servers fqdn)
         * next create a distributed table that looks at the ReplicatedMergeTrees
         * either define the {shard} and {replica} macros in your clickhouse server config or replace accordingly when you run the queries on each host
         * see: [Distributed]    (https://clickhouse.yandex/docs/en/table_engines/distributed.html) and [Replicated] (https://clickhouse.yandex/docs/en/table_engines/replication.html)
@@ -96,7 +97,7 @@ Usage of ./prom2click:
         - url: "http://localhost:9201/write"
 
     ```
-* Build prom2click
+* Build prom2click and run it
     * Install go and glide
 
     ```console
@@ -105,8 +106,29 @@ Usage of ./prom2click:
     $ ./bin/prom2click
     ```
 
+* Create a dashboard
+    * Example query
+    ```sql
+    SELECT $timeSeries as t, median(val) FROM $table WHERE $timeFilter
+        AND name = $metric GROUP BY t ORDER BY t
+    ```
+    * Basic graph
+
+    ![Alt text](./img/screen1.png "Dashboard Screen" )
+
 ### Testing
 
 ``make test``
 
 note: there are no tests (yet)..
+
+
+### Notes
+
+Some things I'm still working out - this list will likely get longer for a bit:
+
+* How many metrics/second a reasonably sized cluster can accept (eg. 4 servers, 2 shards, 1 replica per shard)
+* How to use templated variables within templates 
+* How to select multiple series
+* Will the graphite merge engine work with my schema
+* Are 10 second samples for > 1 year feasible
