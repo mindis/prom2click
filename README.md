@@ -60,7 +60,7 @@ Usage of ./prom2click:
         * eg. for each clickhouse shard run two+ clickhouse servers and setup a ReplicatedMergeTree on each with the same zk path and uniq replicas (eg. replica => the servers fqdn)
         * next create a distributed table that looks at the ReplicatedMergeTrees
         * either define the {shard} and {replica} macros in your clickhouse server config or replace accordingly when you run the queries on each host
-        * see: [Distributed]    (https://clickhouse.yandex/docs/en/table_engines/distributed.html) and [Replicated] (https://clickhouse.yandex/docs/en/table_engines/replication.html)
+        * see: [Distributed](https://clickhouse.yandex/docs/en/table_engines/distributed.html) and [Replicated](https://clickhouse.yandex/docs/en/table_engines/replication.html)
     	```sql
 
     	CREATE TABLE IF NOT EXISTS metrics.samples
