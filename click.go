@@ -30,8 +30,8 @@ import (
 		name String,
 		tags Array(String),
 		vals Array(String),
-		value Float64,
-		ts UInt32
+		val Float64,
+		ts DateTime
 
 	) ENGINE = MergeTree(date, (tags, ts), 8192);
 
@@ -44,7 +44,7 @@ import (
 		tags Array(String),
 		vals Array(String),
 		val Float64,
-		ts UInt32
+		ts DateTime
 
 	) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/metrics.samples', '{replica}', date, (tags, ts), 8192);
 
@@ -58,7 +58,7 @@ import (
 		tags Array(String),
 		vals Array(String),
 		val Float64,
-		ts UInt32
+		ts DateTime
 	) ENGINE = Distributed(metrics, metrics, samples, intHash64(name));
 
 */
@@ -162,7 +162,7 @@ func (w *p2cWriter) Start() {
 					continue
 				}
 
-				_, err = smt.Exec(req.date, req.name, clickhouse.Array(req.tags),
+				_, err = smt.Exec(req.ts, req.name, clickhouse.Array(req.tags),
 					clickhouse.Array(req.vals), req.val, req.ts)
 
 				if err != nil {

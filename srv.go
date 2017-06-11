@@ -16,12 +16,11 @@ import (
 )
 
 type p2cRequest struct {
-	date time.Time
 	name string
 	tags []string
 	vals []string
 	val  float64
-	ts   int64
+	ts   time.Time
 }
 
 type p2cServer struct {
@@ -102,8 +101,7 @@ func (c *p2cServer) process(req remote.WriteRequest) {
 		for _, sample := range series.Samples {
 			p2c := new(p2cRequest)
 			p2c.name = name
-			p2c.ts = sample.TimestampMs / 1000
-			p2c.date = time.Unix(p2c.ts, 0)
+			p2c.ts = time.Unix(sample.TimestampMs/1000, 0)
 			p2c.val = sample.Value
 			p2c.tags = tags
 			p2c.vals = vals
@@ -122,4 +120,19 @@ func (c *p2cServer) Start() error {
 func (c *p2cServer) Shutdown() {
 	close(c.requests)
 	c.writer.Wait()
+
+	wchan := make(chan struct{})
+	go func() {
+		c.writer.Wait()
+		close(wchan)
+	}()
+
+	select {
+	case <-wchan:
+	fmt.Println("Writer shutdown cleanly..")
+	// All done!
+	case <-time.After(10 * time.Second):
+		fmt.Println("Writer shutdown timed out, samples will be lost..")
+	}
+
 }
