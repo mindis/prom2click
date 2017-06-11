@@ -70,7 +70,7 @@ func parseFlags() *config {
 	// clickhouse dsn
 	ddsn := "tcp://127.0.0.1:9000?username=&password=&database=metrics&" +
 		"read_timeout=10&write_timeout=10&alt_hosts="
-	flag.StringVar(&cfg.ChDSN, "dsn", ddsn,
+	flag.StringVar(&cfg.ChDSN, "ch.dsn", ddsn,
 		"The clickhouse server DSN to write to eg. "+
 			"tcp://host1:9000?username=user&password=qwerty&database=clicks&"+
 			"read_timeout=10&write_timeout=20&alt_hosts=host2:9000,host3:9000 "+
