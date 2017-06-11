@@ -107,6 +107,10 @@ Usage of ./prom2click:
     ```
 
 * Create a dashboard
+    * Example template query 
+    ```sql
+    SELECT DISTINCT(name) FROM metrics.samples
+    ```
     * Example query
     ```sql
     SELECT $timeSeries as t, median(val) FROM $table WHERE $timeFilter
@@ -125,9 +129,10 @@ note: there are no tests (yet)..
 
 ### Notes
 
-Some things I'm still working out - this list will likely get longer for a bit:
+Some things not yet sorted - this list will likely get longer for a bit:
 
-* How many metrics/second a reasonably sized cluster can accept (eg. 4 servers, 2 shards, 1 replica per shard)
+* Get list of metrics, tags and tag values into Grafana more efficiently (instead of SELECT DISTINCT..)
+* Load testing - how many metrics/second can a reasonably sized cluster accept (eg. 4 servers, 2 shards, 1 replica per shard)
 * How to use templated variables within templates 
 * How to select multiple series
 * Will the graphite merge engine work with my schema
