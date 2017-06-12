@@ -2,9 +2,7 @@
 
 Prom2click is a Prometheus remote storage adapter for Clickhouse. This project is in the early stages, beta testers are welcome :)
 
-It's in a working state and writing metrics into Clickhouse in configurable batch sizes with a very small number of metrics (eg. Prometheus scraping itself). The schema is not yet finalized so expect changes until read support is added and working.
-
-Currently sorting out if it is feasible to support regex searching on tags. Most likely simple equality searching will be supported only. Tags are stored in a Clickhouse array as <key1>=<value1>,<key2>=<value2>,... and the idea is to use array/string functions to select matching records.
+It's in a working state and writing metrics into Clickhouse in configurable batch sizes with a very small number of metrics (eg. Prometheus scraping itself). The schema is not yet finalized so expect changes until read support is added and working (read support is a wip and it looks promising).
 
 
 ```console
@@ -18,7 +16,7 @@ Usage of ./prom2click:
         The clickhouse database to write to. (default "metrics")
   -ch.table string
         The clickhouse table to write to. (default "samples")
-  -dsn string
+  -ch.dsn string
         The clickhouse server DSN to write to eg. tcp://host1:9000?username=user&password=qwerty&database=clicks&read_timeout=10&write_timeout=20&alt_hosts=host2:9000,host3:9000 (see https://github.com/kshvakov/clickhouse). (default "tcp://127.0.0.1:9000?username=&password=&database=metrics&read_timeout=10&write_timeout=10&alt_hosts=")
   -log.format value
         Set the log target and format. Example: "logger:syslog?appname=bob&local=7" or "logger:stdout?json=true" (default "logger:stderr")
