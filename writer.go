@@ -11,61 +11,9 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-/*
-	Clickhouse SQL for expected tables - depending on metric volume and if you don't
-	need replicas/ha then a MergeTree engine may be all you need. Most likley you'll
-	want a ReplicatedMergeTree with at least one replica.
-
-	For scaling use a Distributed table accross each MergeTree (or ReplicatedMergeTree).
-	Prom2click doesn't understand shards and so it depends on the distributed table
-	hashing to distribute writes accross the shards.
-
-	create database if not exists metrics;
-
-	-no replication - fine for testing:
-
-	create table if not exists metrics.samples
-	(
-		date Date DEFAULT toDate(0),
-		name String,
-		tags Array(String),
-		vals Array(String),
-		val Float64,
-		ts DateTime
-
-	) ENGINE = MergeTree(date, (tags, ts), 8192);
-
-	-or for replication - this is probably what you want:
-
-	create table if not exists metrics.samples
-	(
-		date Date DEFAULT toDate(0),
-		name String,
-		tags Array(String),
-		vals Array(String),
-		val Float64,
-		ts DateTime
-
-	) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/metrics.samples', '{replica}', date, (tags, ts), 8192);
-
-
-	-and if you have more than one shard - # shards depends on your metric volumes:
-
-	create table if not exists metrics.dist
-	(
-		date Date DEFAULT toDate(0),
-		name String,
-		tags Array(String),
-		vals Array(String),
-		val Float64,
-		ts DateTime
-	) ENGINE = Distributed(metrics, metrics, samples, intHash64(name));
-
-*/
-
 var insertSQL = `INSERT INTO %s.%s
-	(date, name, tags, vals, val, ts)
-	VALUES	(?, ?, ?, ?, ?, ?)`
+	(date, name, tags, val, ts)
+	VALUES	(?, ?, ?, ?, ?)`
 
 type p2cWriter struct {
 	conf     *config
@@ -163,7 +111,7 @@ func (w *p2cWriter) Start() {
 				}
 
 				_, err = smt.Exec(req.ts, req.name, clickhouse.Array(req.tags),
-					clickhouse.Array(req.vals), req.val, req.ts)
+					req.val, req.ts)
 
 				if err != nil {
 					fmt.Printf("Error: statement exec: %s\n", err.Error())

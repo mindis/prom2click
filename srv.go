@@ -18,7 +18,6 @@ import (
 type p2cRequest struct {
 	name string
 	tags []string
-	vals []string
 	val  float64
 	ts   time.Time
 }
@@ -28,6 +27,7 @@ type p2cServer struct {
 	mux      *http.ServeMux
 	conf     *config
 	writer   *p2cWriter
+	reader   *p2cReader
 	rx       prometheus.Counter
 }
 
@@ -41,6 +41,12 @@ func NewP2CServer(conf *config) (*p2cServer, error) {
 	c.writer, err = NewP2CWriter(conf, c.requests)
 	if err != nil {
 		fmt.Printf("Error creating clickhouse writer: %s\n", err.Error())
+		return c, err
+	}
+
+	c.reader, err = NewP2CReader(conf)
+	if err != nil {
+		fmt.Printf("Error creating clickhouse reader: %s\n", err.Error())
 		return c, err
 	}
 
@@ -74,6 +80,48 @@ func NewP2CServer(conf *config) (*p2cServer, error) {
 		c.process(req)
 	})
 
+	c.mux.HandleFunc("/read", func(w http.ResponseWriter, r *http.Request) {
+		compressed, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		reqBuf, err := snappy.Decode(nil, compressed)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		var req remote.ReadRequest
+		if err := proto.Unmarshal(reqBuf, &req); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		var resp *remote.ReadResponse
+		resp, err = c.reader.Read(&req)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		data, err := proto.Marshal(resp)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/x-protobuf")
+		w.Header().Set("Content-Encoding", "snappy")
+
+		compressed = snappy.Encode(nil, data)
+		if _, err := w.Write(compressed); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	})
+
 	c.mux.Handle(c.conf.HTTPMetricsPath, prometheus.InstrumentHandler(
 		c.conf.HTTPMetricsPath, prometheus.UninstrumentedHandler(),
 	))
@@ -87,15 +135,17 @@ func (c *p2cServer) process(req remote.WriteRequest) {
 		var (
 			name string
 			tags []string
-			vals []string
 		)
 
 		for _, label := range series.Labels {
 			if model.LabelName(label.Name) == model.MetricNameLabel {
 				name = label.Value
 			}
-			tags = append(tags, label.Name)
-			vals = append(vals, label.Value)
+			// store tags in <key>=<value> format
+			// allows for has(tags, "key=val") searches
+			// probably impossible/difficult to do regex searches on tags
+			t := fmt.Sprintf("%s=%s", label.Name, label.Value)
+			tags = append(tags, t)
 		}
 
 		for _, sample := range series.Samples {
@@ -104,7 +154,6 @@ func (c *p2cServer) process(req remote.WriteRequest) {
 			p2c.ts = time.Unix(sample.TimestampMs/1000, 0)
 			p2c.val = sample.Value
 			p2c.tags = tags
-			p2c.vals = vals
 			c.requests <- p2c
 		}
 
@@ -129,7 +178,7 @@ func (c *p2cServer) Shutdown() {
 
 	select {
 	case <-wchan:
-	fmt.Println("Writer shutdown cleanly..")
+		fmt.Println("Writer shutdown cleanly..")
 	// All done!
 	case <-time.After(10 * time.Second):
 		fmt.Println("Writer shutdown timed out, samples will be lost..")

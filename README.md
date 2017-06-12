@@ -2,7 +2,9 @@
 
 Prom2click is a Prometheus remote storage adapter for Clickhouse. This project is in the early stages, beta testers are welcome :)
 
-It's in a working state and writing metrics into Clickhouse in configurable batch sizes with a very small number of metrics (eg. Prometheus scraping itself).
+It's in a working state and writing metrics into Clickhouse in configurable batch sizes with a very small number of metrics (eg. Prometheus scraping itself). The schema is not yet finalized so expect changes until read support is added and working.
+
+Currently sorting out if it is feasible to support regex searching on tags. Most likely simple equality searching will be supported only. Tags are stored in a Clickhouse array as <key1>=<value1>,<key2>=<value2>,... and the idea is to use array/string functions to select matching records.
 
 
 ```console
@@ -49,7 +51,6 @@ Usage of ./prom2click:
                 date Date DEFAULT toDate(0),
                 name String,
                 tags Array(String),
-                vals Array(String),
                 val Float64,
                 ts DateTime
 
@@ -68,7 +69,6 @@ Usage of ./prom2click:
     		date Date DEFAULT toDate(0),
     		name String,
     		tags Array(String),
-    		vals Array(String),
     		val Float64,
     		ts DateTime
 
@@ -79,7 +79,6 @@ Usage of ./prom2click:
     		date Date DEFAULT toDate(0),
     		name String,
     		tags Array(String),
-    		vals Array(String),
     		val Float64,
     		ts DateTime
     	) ENGINE = Distributed(metrics, metrics, samples, intHash64(name));
@@ -132,8 +131,8 @@ note: there are no tests (yet)..
 Some things not yet sorted - this list will likely get longer for a bit:
 
 * Get list of metrics, tags and tag values into Grafana more efficiently (instead of SELECT DISTINCT..)
-* Load testing - how many metrics/second can a reasonably sized cluster accept (eg. 4 servers, 2 shards, 1 replica per shard)
+* How to select multiple values in templates
 * How to use templated variables within templates 
-* How to select multiple series
+* Load testing - how many metrics/second can a reasonably sized cluster accept (eg. 4 servers, 2 shards, 1 replica per shard)
 * Will the graphite merge engine work with my schema
 * Are 10 second samples for > 1 year feasible
