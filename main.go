@@ -17,6 +17,9 @@ type config struct {
 	ChTable         string
 	ChBatch         int
 	ChanSize        int
+	CHQuantile      float64
+	CHMaxSamples    int
+	CHMinPeriod     int
 	HTTPTimeout     time.Duration
 	HTTPAddr        string
 	HTTPWritePath   string
@@ -95,6 +98,26 @@ func parseFlags() *config {
 	// channel buffer size between http server => clickhouse writer(s)
 	flag.IntVar(&cfg.ChanSize, "ch.buffer", 8192,
 		"Maximum internal channel buffer size (n requests).",
+	)
+
+	// quantile (eg. 0.9 for 90th) for aggregation of timeseries values from CH
+	flag.Float64Var(&cfg.CHQuantile, "ch.quantile", 0.75,
+		"Quantile/Percentile for time series aggregation when the number of points exceeds ch.maxsamples.",
+	)
+
+	// maximum number of samples to return
+	flag.IntVar(&cfg.CHMaxSamples, "ch.maxsamples", 500,
+		"Maximum number of samples to return to Prometheus for a remote read request - minimum accepted value is 50.",
+	)
+	// need to ensure this isn't 0 - divide by 0..
+	if cfg.CHMaxSamples < 50 {
+		fmt.Printf("Error: invalid ch.maxsamples of %d - minimum is 50\n", cfg.CHMaxSamples)
+		os.Exit(1)
+	}
+
+	// http shutdown and request timeout
+	flag.IntVar(&cfg.CHMinPeriod, "ch.minperiod", 10,
+		"The minimum time range for Clickhouse time aggregation.",
 	)
 
 	// http listen address

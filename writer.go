@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"sort"
 	"time"
 
 	"sync"
@@ -68,7 +69,7 @@ func (w *p2cWriter) Start() {
 
 	go func() {
 		w.wg.Add(1)
-		fmt.Println("Clickhouse writer starting..")
+		fmt.Println("Writer starting..")
 		sql := fmt.Sprintf(insertSQL, w.conf.ChDB, w.conf.ChTable)
 		ok := true
 		for ok {
@@ -81,7 +82,7 @@ func (w *p2cWriter) Start() {
 				// get requet and also check if channel is closed
 				req, ok = <-w.requests
 				if !ok {
-					fmt.Println("clickhouse writer stopping..")
+					fmt.Println("Writer stopping..")
 					break
 				}
 				reqs = append(reqs, req)
@@ -110,6 +111,9 @@ func (w *p2cWriter) Start() {
 					continue
 				}
 
+				// ensure tags are inserted in the same order each time
+				// possibly/probably impacts indexing?
+				sort.Strings(req.tags)
 				_, err = smt.Exec(req.ts, req.name, clickhouse.Array(req.tags),
 					req.val, req.ts)
 
@@ -129,7 +133,7 @@ func (w *p2cWriter) Start() {
 			}
 
 		}
-		fmt.Println("clickhouse writer stopped..")
+		fmt.Println("Writer stopped..")
 		w.wg.Done()
 	}()
 }

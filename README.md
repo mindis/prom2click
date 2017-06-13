@@ -52,7 +52,7 @@ Usage of ./prom2click:
                 val Float64,
                 ts DateTime
 
-            ) ENGINE = MergeTree(date, (tags, ts), 8192);
+            ) ENGINE = MergeTree(date, (name, tags, ts), 8192);
         ```
     * For a more resiliant setup you could setup shards, replicas and a distributed table
         * setup a Zookeeper cluster (or zetcd)
@@ -70,7 +70,7 @@ Usage of ./prom2click:
     		val Float64,
     		ts DateTime
 
-    	) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/metrics.samples', '  {replica}', date, (tags, ts), 8192);
+    	) ENGINE = ReplicatedMergeTree('/clickhouse/tables/{shard}/metrics.samples', '  {replica}', date, (name, tags, ts), 8192);
 
     	CREATE TABLE IF NOT EXISTS metrics.dist
     	(

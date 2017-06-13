@@ -161,7 +161,7 @@ func (c *p2cServer) process(req remote.WriteRequest) {
 }
 
 func (c *p2cServer) Start() error {
-	fmt.Println("Clickhouse http server starting...")
+	fmt.Println("HTTP server starting...")
 	c.writer.Start()
 	return graceful.RunWithErr(c.conf.HTTPAddr, c.conf.HTTPTimeout, c.mux)
 }
