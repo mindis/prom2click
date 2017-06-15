@@ -74,9 +74,9 @@ func parseFlags() *config {
 	ddsn := "tcp://127.0.0.1:9000?username=&password=&database=metrics&" +
 		"read_timeout=10&write_timeout=10&alt_hosts="
 	flag.StringVar(&cfg.ChDSN, "ch.dsn", ddsn,
-		"The clickhouse server DSN to write to eg. "+
+		"The clickhouse server DSN to write to eg."+
 			"tcp://host1:9000?username=user&password=qwerty&database=clicks&"+
-			"read_timeout=10&write_timeout=20&alt_hosts=host2:9000,host3:9000 "+
+			"read_timeout=10&write_timeout=20&alt_hosts=host2:9000,host3:9000"+
 			"(see https://github.com/kshvakov/clickhouse).",
 	)
 
@@ -102,12 +102,18 @@ func parseFlags() *config {
 
 	// quantile (eg. 0.9 for 90th) for aggregation of timeseries values from CH
 	flag.Float64Var(&cfg.CHQuantile, "ch.quantile", 0.75,
-		"Quantile/Percentile for time series aggregation when the number of points exceeds ch.maxsamples.",
+		"Quantile/Percentile for time series aggregation when the number "+
+			"of points exceeds ch.maxsamples.",
 	)
 
 	// maximum number of samples to return
-	flag.IntVar(&cfg.CHMaxSamples, "ch.maxsamples", 500,
-		"Maximum number of samples to return to Prometheus for a remote read request - minimum accepted value is 50.",
+	// todo: fixup strings.. yuck.
+	flag.IntVar(&cfg.CHMaxSamples, "ch.maxsamples", 8192,
+		"Maximum number of samples to return to Prometheus for a remote read "+
+			"request - the minimum accepted value is 50. "+
+			"Note: if you set this too low there can be issues displaying graphs in grafana. "+
+			"Increasing this will cause query times and memory utilization to grow. You'll "+
+			"probably need to experiment with this.",
 	)
 	// need to ensure this isn't 0 - divide by 0..
 	if cfg.CHMaxSamples < 50 {
@@ -117,7 +123,7 @@ func parseFlags() *config {
 
 	// http shutdown and request timeout
 	flag.IntVar(&cfg.CHMinPeriod, "ch.minperiod", 10,
-		"The minimum time range for Clickhouse time aggregation.",
+		"The minimum time range for Clickhouse time aggregation in seconds.",
 	)
 
 	// http listen address

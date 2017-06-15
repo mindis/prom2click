@@ -23,6 +23,7 @@ type p2cWriter struct {
 	db       *sql.DB
 	tx       prometheus.Counter
 	ko       prometheus.Counter
+	test     prometheus.Counter
 	timings  prometheus.Histogram
 }
 
@@ -51,6 +52,13 @@ func NewP2CWriter(conf *config, reqs chan *p2cRequest) (*p2cWriter, error) {
 		},
 	)
 
+	w.test = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "prometheus_remote_storage_sent_batch_duration_seconds_bucket_test",
+			Help: "Test metric to ensure backfilled metrics are readable via prometheus.",
+		},
+	)
+
 	w.timings = prometheus.NewHistogram(
 		prometheus.HistogramOpts{
 			Name:    "sent_batch_duration_seconds",
@@ -60,6 +68,7 @@ func NewP2CWriter(conf *config, reqs chan *p2cRequest) (*p2cWriter, error) {
 	)
 	prometheus.MustRegister(w.tx)
 	prometheus.MustRegister(w.ko)
+	prometheus.MustRegister(w.test)
 	prometheus.MustRegister(w.timings)
 
 	return w, nil
@@ -73,6 +82,7 @@ func (w *p2cWriter) Start() {
 		sql := fmt.Sprintf(insertSQL, w.conf.ChDB, w.conf.ChTable)
 		ok := true
 		for ok {
+			w.test.Add(1)
 			// get next batch of requests
 			var reqs []*p2cRequest
 

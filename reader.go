@@ -152,175 +152,6 @@ func (r *p2cReader) getSQL(query *remote.Query) (string, error) {
 	return sql, nil
 }
 
-/*
-	misc notes on adding remote reader functionality..
-
-	issues:
-		-prometheus passes match on specific field not an overall match eg. key=^something.* not ^key=something.*
-		-simplest solution that may work is to remove any ^ chars from ^something.* and always put ^key=something.*
-		-ie. remove hat symbol from prometheus remote read request with regexp match/not match and put in front of key
-
-	need:
-		+ -conf for quantile value for ts value aggregation
-		+ -conf for max # samples to return per timeseries
-		+ -conf for min time period for aggregation (eg. poll interval of prometheus)
-		+ -algo to determine aggregation period for "group by t" from max # samples (above)
-		-query builder that supports each type of matcher (eq, neq, regex, nregex)
-		-sample/response builder that takes clickhouse results and returns samples
-
-
-	matcher types:
-		EQUAL
-		NOT_EQUAL
-		REGEX_MATCH
-		REGEX_NO_MATCH
-
-	also:
-		looks like each match type can have multiple values (see below) eg.
-
-			matchers:<name:"handler" value:"alertmanagers|alerts|config|consoles|drop_series|federate|flags|graph|heap|label_values|options|prometheus|query|query_range|rules|series|static|status|targets|version" >
-
-
-	some sqlish ideas:
-
-	// regular expression match - note: also possible to use or in arrayExists
-	select count() AS CNT, (intDiv(toUInt32(ts), 3600) * 3600) * 1000 as t,
-		name,
-		tags,
-		quantile(0.9)(val)
-	from metrics.samples
-	where arrayExists(
-		x -> 1 == match(x, '\^__name__=go_memstats_alloc.\*'),
-		tags
-	) = 1
-	GROUP BY t, name, tags
-	ORDER BY t
-	limit 500;
-
-
-	// regular expression no match:
-	select count() AS CNT, (intDiv(toUInt32(ts), 3600) * 3600) * 1000 as t,
-		name,
-		tags,
-		quantile(0.9)(val)
-	from metrics.samples
-	where arrayExists(
-		x -> 1 == match(x, '\^__name__=go_memstats_alloc.\*'),
-		tags
-	) = 0
-	GROUP BY t, name, tags
-	ORDER BY t
-	limit 500;
-
-
-	// match - build IN () statement for multiple values
-	// 	-or- for single value x == value
-	select count() AS CNT, (intDiv(toUInt32(ts), 3600) * 3600) * 1000 as t,
-		name,
-		tags,
-		quantile(0.9)(val)
-	from metrics.samples
-	where arrayExists(
-	    x -> x IN ('__name__=go_gc_duration_seconds'),
-	    tags
-	) = 1
-	GROUP BY t, name, tags
-	ORDER BY t
-	limit 500;
-
-
-	// no-match - same as match however where arrayExits = 0
-	select count() AS CNT, (intDiv(toUInt32(ts), 3600) * 3600) * 1000 as t,
-		name,
-		tags,
-		quantile(0.9)(val)
-	from metrics.samples
-	where arrayExists(
-	    x -> x IN ('__name__=go_gc_duration_seconds'),
-	    tags
-	) = 0
-	GROUP BY t, name, tags
-	ORDER BY t
-	limit 500;
-
-
-
-	a few example remote read requests from prometheus:
-	//                           key regexp
-	sql = "x -> 1 == match(x, '\^%s=%s'),"
-
-
-	start_timestamp_ms:1497145508000
-	end_timestamp_ms:1497231968000
-	matchers:<name:"instance" value:"localhost:9090" >
-	matchers:<name:"__name__" value:"go_memstats_buck_hash_sys_bytes" >
-	matchers:<name:"job" value:"prometheus" >
-
-
-	Reader: rx read request
-	start_timestamp_ms:1497167948000
-	end_timestamp_ms:1497254408000
-	matchers:<name:"instance" value:"localhost:9090" >
-	matchers:<name:"__name__" value:"http_request_duration_microseconds" >
-	matchers:<type:NOT_EQUAL name:"handler" value:"alerts" >
-	matchers:<type:REGEX_MATCH name:"job" value:"^prometheus$" >
-	matchers:<type:REGEX_NO_MATCH name:"handler" value:"^alertmana.*" >
-
-
-
-	start_timestamp_ms:1497163400000
-	end_timestamp_ms:1497249860000
-	matchers:<name:"instance" value:"localhost:9090" >
-	matchers:<name:"handler" value:"alertmanagers|alerts|config|consoles|drop_series|federate|flags|graph|heap|label_values|options|prometheus|query|query_range|rules|series|static|status|targets|version" >
-	matchers:<name:"__name__" value:"http_request_duration_microseconds_count" >
-	matchers:<name:"job" value:"prometheus" >
-
-
-	start_timestamp_ms:1497165574000
-	end_timestamp_ms:1497252034000
-	matchers:<name:"instance" value:"localhost:9090" >
-	matchers:<name:"__name__" value:"go_gc_duration_seconds_sum" >
-	matchers:<type:REGEX_MATCH name:"job" value:"^prometheus$" >
-
-
-	Reader: rx read request
-	start_timestamp_ms:1497167714000
-	end_timestamp_ms:1497254174000
-	matchers:<name:"instance"
-	value:"localhost:9090" >
-	matchers:<name:"__name__"
-	value:"http_request_duration_microseconds" >
-	matchers:<type:REGEX_MATCH name:"job" value:"^prometheus$" >
-	matchers:<type:REGEX_NO_MATCH name:"handler" value:"alerts" >
-
-
-	more misc sql..
-
-	// example from clickhouse grafana datasource:
-	SELECT (intDiv(toUInt32(ts), 20) * 20) * 1000 as t,
-		median(val) FROM metrics.samples
-	WHERE
-		date >= toDate(1497209095) AND
-		ts >= toDateTime(1497209095) AND
-		name = 'go_memstats_frees_total'
-	GROUP BY t, tags ORDER BY t
-
-	// multiple regex example:
-	select count() AS CNT, (intDiv(toUInt32(ts), 3600) * 3600) * 1000 as t,
-		name,
-		tags,
-		quantile(0.9)(val)
-	from metrics.samples
-	where arrayExists(
-		x -> 1 == match(x, '\^__name__=go_memstats_alloc.\*') or 1 == match(x, '\^__name__=http.\*'),
-		tags
-	) = 1
-	GROUP BY t, name, tags
-	ORDER BY t
-	limit 500;
-
-*/
-
 func NewP2CReader(conf *config) (*p2cReader, error) {
 	var err error
 	r := new(p2cReader)
@@ -348,12 +179,14 @@ func (r *p2cReader) Read(req *remote.ReadRequest) (*remote.ReadResponse, error) 
 	var tsres = make(map[string]*remote.TimeSeries)
 
 	// for debugging/figuring out query format/etc
+	rcount := 0
 	for _, q := range req.Queries {
 		// remove me..
-		//fmt.Println(q)
+		fmt.Printf("\nquery: start: %d, end: %d\n\n", q.StartTimestampMs, q.EndTimestampMs)
 
 		// get the select sql
 		sqlStr, err = r.getSQL(q)
+		fmt.Printf("query: running sql: %s\n\n", sqlStr)
 		if err != nil {
 			fmt.Printf("Error: reader: getSQL: %s\n", err.Error())
 			return &resp, err
@@ -374,7 +207,9 @@ func (r *p2cReader) Read(req *remote.ReadRequest) (*remote.ReadResponse, error) 
 		}
 
 		// build map of timeseries from sql result
+
 		for rows.Next() {
+			rcount++
 			var (
 				cnt   int
 				t     int64
@@ -409,7 +244,8 @@ func (r *p2cReader) Read(req *remote.ReadRequest) (*remote.ReadResponse, error) 
 		resp.Results[0].Timeseries = append(resp.Results[0].Timeseries, ts)
 	}
 
-	//todo: return metrics :P
+	fmt.Printf("query: returning %d rows for %d queries\n", rcount, len(req.Queries))
+
 	return &resp, nil
 
 }

@@ -1,0 +1,123 @@
+<?xml version="1.0"?>
+<yandex>
+        <logger>
+                <level>warning</level>
+                <log>/var/log/clickhouse-server/clickhouse-server.log</log>
+                <errorlog>/var/log/clickhouse-server/clickhouse-server.err.log</errorlog>
+                <size>100M</size>
+                <count>10</count>
+        </logger>
+        <http_port>8123</http_port>
+        <tcp_port>9000</tcp_port>
+        <interserver_http_port>9009</interserver_http_port>
+        <interserver_http_host>shardnreplicanhostname</interserver_http_host>
+        <listen_host>0.0.0.0</listen_host>
+        <max_connections>8192</max_connections>
+        <keep_alive_timeout>3</keep_alive_timeout>
+        <max_concurrent_queries>100</max_concurrent_queries>
+        <uncompressed_cache_size>8589934</uncompressed_cache_size>
+        <mark_cache_size>5368709</mark_cache_size>
+        <path>/var/lib/clickhouse/</path>
+        <tmp_path>/var/lib/clickhouse/tmp/</tmp_path>
+        <users_config>users.xml</users_config>
+        <default_profile>default</default_profile>
+        <default_database>default</default_database>
+        <timezone>UTC</timezone>
+
+        <!-- Configuration of clusters that could be used in Distributed tables.
+                 https://clickhouse.yandex/reference_en.html#Distributed
+          -->
+        <remote_servers>
+                <metrics>
+                        <shard>
+                        <!-- Optional. Shard weight when writing data. By default, 1. -->
+                        <weight>1</weight>
+                        <!-- Optional. Whether to write data to just one of the replicas. By default, false - write data to all of the replicas. -->
+                        <!-- NOTE: this is set to true because we're using a distributed table table points to a replicated table -->
+                        <internal_replication>true</internal_replication>
+                        <replica>
+                                <host>shard1replica1host</host>
+                                <port>9000</port>
+                        </replica>
+                        <replica>
+                                <host>shard1replica2host</host>
+                                <port>9000</port>
+                        </replica>
+                        </shard>
+                        <shard>
+                        <!-- Optional. Shard weight when writing data. By default, 1. -->
+                        <weight>1</weight>
+                        <!-- Optional. Whether to write data to just one of the replicas. By default, false - write data to all of the replicas. -->
+                        <!-- NOTE: this is set to true because we're using a distributed table table points to a replicated table -->
+                        <internal_replication>true</internal_replication>
+                        <replica>
+                                <host>shard2replica1host</host>
+                                <port>9000</port>
+                        </replica>
+                        <replica>
+                                <host>shard2replica2host</host>
+                                <port>9000</port>
+                        </replica>
+                        </shard>
+                </metrics>
+        </remote_servers>
+
+        <zookeeper>
+                <node index="1">
+                        <host>zkhost1</host>
+                        <port>2181</port>
+                </node>
+                <node index="2">
+                        <host>zkhost2</host>
+                        <port>2181</port>
+                </node>
+                <node index="3">
+                        <host>zkhost3</host>
+                        <port>2181</port>
+                </node>
+        </zookeeper>
+
+
+        <builtin_dictionaries_reload_interval>3600</builtin_dictionaries_reload_interval>
+        <query_log>
+                <database>system</database>
+                <table>query_log</table>
+                <flush_interval_milliseconds>7500</flush_interval_milliseconds>
+        </query_log>
+        <part_log>
+                <database>system</database>
+                <table>part_log</table>
+
+                <flush_interval_milliseconds>7500</flush_interval_milliseconds>
+        </part_log>
+        <dictionaries_config>*_dictionary.xml</dictionaries_config>
+        <compression incl="/etc/clickhouse-server/clickhouse_compression.xml">
+        </compression>
+        <resharding>
+                <task_queue_path>/clickhouse/task_queue</task_queue_path>
+        </resharding>
+
+        <!-- Settings for the ReplicatedGraphiteMergeTree engine. 
+            Adjust the retention and rollup entries as needed. -->
+        <graphite_rollup>
+                <path_column_name>tags</path_column_name>
+                <time_column_name>ts</time_column_name>
+                <value_column_name>val</value_column_name>
+                <version_column_name>updated</version_column_name>
+                <default>
+                        <function>avg</function>
+                        <retention>
+                                <age>0</age>
+                                <precision>10</precision>
+                        </retention>
+                        <retention>
+                                <age>86400</age>
+                                <precision>30</precision>
+                        </retention>
+                        <retention>
+                                <age>172800</age>
+                                <precision>300</precision>
+                        </retention>
+                </default>
+        </graphite_rollup>
+</yandex>
