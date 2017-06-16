@@ -1,12 +1,10 @@
 # prom2click
 
-Prom2click is a Prometheus remote storage adapter for Clickhouse. This project is in the early stages, beta testers are welcome :). Consider it experimental - that said it is quite promising as a scalable and highly available remote storage for Prometheus.
+Prom2click is a Prometheus remote storage adapter for [Clickhouse](https://clickhouse.yandex/). This project is in the early stages, beta testers are welcome :). Consider it experimental - that said it is quite promising as a scalable and highly available remote storage for Prometheus.
 
-It's functional and writing metrics into Clickhouse in configurable batch sizes. Note that (currently) it does consume quite a lot of cpu so you'll need a decent number of cores to sustain ingestion rates (eg. > hundreds of thousands/second). Also, it is missing some bits like doco, proper logging, tests and database error handling.
+It's functional and writing metrics into Clickhouse in configurable batch sizes. Note that (currently) it is cpu hungry so you'll need a decent number of cores to sustain higher ingestion rates (eg. > hundreds of thousands/second). Also, it is missing some bits like doco, proper logging, tests and database error handling.
 
-As of this writing remote storage in Prometheus isn't quite complete so there are a few issues:
-* when combining very long range queries (eg. 1 year) Prometheus seems to drop remote storage metrics if the sample count is too low (possibly related to the time difference between samples - haven't had time yet to look into it yet).
-* Prometheus does not yet query remote storage for a list of tags.
+If you've not heard of Clickhouse before it's a column oriented data store designed for real time analytic workloads on massive data sets (100's of tb+). It also happens to be pretty well suited for storing/retreiving time series data as it supports compression and has a Graphite type rollup on arbitrary tables/columns.
 
 
 ```console
@@ -48,6 +46,8 @@ Usage of ./bin/prom2click:
 
 * [Install clickhouse](https://clickhouse.yandex/)
     * If you run ubuntu they have debs, otherwise.. well.. containers? (I'm running it in lxc with net=none on some Redhat based systems)
+
+    * Configure Clickhouse graphite rollup settings in config.xml (bottom lines in [config.xml](https://github.com/s4z/prom2click/blob/master/config.xml))
 
     * Goto [Tabix](http://ui.tabix.io/) for a quick and easy Clickhouse UI
 
@@ -148,6 +148,9 @@ Usage of ./bin/prom2click:
 ### Misc Notes / Todo
 
 * add missing metrics (eg. read query metrics, nrows, failures, latency etc)
-* add clickhouse metric exporter
+* add a clickhouse metric exporter
 * possibly create a ticker to flush enqueued metrics at a constant rate
 * add logging support, remove prints
+* try the in-memory Buffer table engine to buffer writes
+* add proper db error handling
+* add tests
