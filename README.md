@@ -110,7 +110,7 @@ Usage of ./bin/prom2click:
     # Remote write configuration (for Graphite, OpenTSDB, InfluxDB or Clickhouse).
     remote_write:
         - url: "http://localhost:9201/write"
-    remote_write:
+    remote_read:
         - url: "http://localhost:9201/read"
 
     ```
