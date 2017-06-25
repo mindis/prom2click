@@ -136,7 +136,7 @@ Usage of ./bin/prom2click:
     ```
     * Basic graph
 
-    ![Alt text](./img/screen1.png "Dashboard Screen" )
+    ![Alt text](./docs/img/screen1.png "Dashboard Screen" )
 
 ### Testing
 

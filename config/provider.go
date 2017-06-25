@@ -10,11 +10,22 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+package config
 
-package main
+import (
+	"time"
+)
 
-import "github.com/s4z/prom2click/commands"
-
-func main() {
-	commands.Execute()
+// Provider provides configuration for Prom2click.
+// Adapted from hugo static site generator.
+type Provider interface {
+	GetString(key string) string
+	GetInt(key string) int
+	GetBool(key string) bool
+	GetDuration(key string) time.Duration
+	GetStringMap(key string) map[string]interface{}
+	GetStringMapString(key string) map[string]string
+	Get(key string) interface{}
+	Set(key string, value interface{})
+	IsSet(key string) bool
 }

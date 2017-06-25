@@ -1,4 +1,4 @@
-// Copyright © 2017 Kenny Freeman kenny.freeman@gmail.com
+// Copyright © 2017 NAME HERE kenny.freeman@gmail.com
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -11,10 +11,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package main
+package commands
 
-import "github.com/s4z/prom2click/commands"
+import (
+	"fmt"
 
-func main() {
-	commands.Execute()
+	"github.com/spf13/cobra"
+)
+
+// RootCmd represents the base command when called without any subcommands
+var runCmd = &cobra.Command{
+	Use:   "run",
+	Short: "Start a prom2click server",
+	Long:  `Start a prom2click server`,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		fmt.Println("todo")
+		return nil
+	},
 }

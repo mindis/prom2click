@@ -18,3 +18,7 @@ import:
 - package: gopkg.in/tylerb/graceful.v1
   version: v1.2.15
 - package: github.com/kshvakov/clickhouse
+- package: github.com/allegro/bigcache
+- package: github.com/spf13/viper
+- package: github.com/spf13/afero
+- package: github.com/spf13/cobra
