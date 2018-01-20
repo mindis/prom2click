@@ -9,7 +9,7 @@ before_install:
   - go get -v github.com/Masterminds/glide 
   - make get-deps
   - go get -v github.com/tcnksm/ghr
-  - go get -v https://github.com/mitchellh/gox
+  - go get -v github.com/mitchellh/gox
 
 install:
   - gox -output "dist/{{.OS}}_{{.Arch}}_{{.Dir}}" ./...
