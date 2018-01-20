@@ -5,7 +5,7 @@ go:
   - 1.9.x
   - master
 
-before-install:
+before_install:
   - go get -v github.com/Masterminds/glide 
   - make get-deps
 
