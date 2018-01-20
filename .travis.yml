@@ -8,6 +8,11 @@ go:
 before_install:
   - go get -v github.com/Masterminds/glide 
   - make get-deps
+  - go get -v github.com/tcnksm/ghr
+  - go get -v https://github.com/mitchellh/gox
 
 install:
-  - make build
+  - gox -output "dist/{{.OS}}_{{.Arch}}_{{.Dir}}" ./...
+
+after_success:
+  -  ghr --username fhalim --token $GITHUB_TOKEN --replace --prerelease --debug pre-release dist/
