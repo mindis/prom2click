@@ -1,7 +1,6 @@
 language: go
 
 go:
-  - 1.8.x
   - 1.9.x
   - master
 
@@ -12,7 +11,7 @@ before_install:
   - go get -v github.com/mitchellh/gox
 
 install:
-  - gox -output "dist/{{.OS}}_{{.Arch}}_{{.Dir}}" ./...
+  - gox -output "dist/{{.Dir}}_{{.OS}}_{{.Arch}}" ./...
 
 after_success:
-  -  ghr --username fhalim --token $GITHUB_TOKEN --replace --prerelease --debug pre-release dist/
+  -  ghr -u ${GITHUB_USERNAME} -t ${GITHUB_TOKEN} -replace -prerelease --debug pre-release dist/
