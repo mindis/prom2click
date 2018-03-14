@@ -10,4 +10,4 @@ RUN make get-deps
 RUN go get -v github.com/mindis/prom2click
 FROM alpine:3.5
 COPY --from=build /go/bin/prom2click /usr/local/bin/prom2click
-ENTRYPOINT "/usr/local/bin/prom2click"
+ENTRYPOINT ["/usr/local/bin/prom2click"]
