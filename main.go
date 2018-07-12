@@ -3,9 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 // a lot of this borrows directly from:
@@ -43,20 +44,23 @@ func main() {
 		return
 	}
 
-	fmt.Println("Starting up..")
+	logger, _ := zap.NewProduction()
+	defer logger.Sync() // flushes buffer, if any
+	sugar := logger.Sugar()
 
-	srv, err := NewP2CServer(conf)
+	sugar.Info("Starting up..")
+
+	srv, err := NewP2CServer(conf, sugar)
 	if err != nil {
-		log.Fatalf("Error: could not create server: %s\n", err.Error())
+		sugar.Fatalf("could not create server: %s\n", err.Error())
 	}
 	err = srv.Start()
 	if err != nil {
-		log.Fatalf("Error: http server returned error: %s\n", err.Error())
+		sugar.Fatalf("http server returned error: %s\n", err.Error())
 	}
-
-	fmt.Println("Shutting down..")
+	sugar.Info("Shutting down..")
 	srv.Shutdown()
-	fmt.Println("Exiting..")
+	sugar.Info("Exiting..")
 }
 
 func parseFlags() *config {

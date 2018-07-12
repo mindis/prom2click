@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/storage/remote"
+	"go.uber.org/zap"
 	"gopkg.in/tylerb/graceful.v1"
 )
 
@@ -28,24 +29,26 @@ type p2cServer struct {
 	writer   *p2cWriter
 	reader   *p2cReader
 	rx       prometheus.Counter
+	logger   *zap.SugaredLogger
 }
 
-func NewP2CServer(conf *config) (*p2cServer, error) {
+func NewP2CServer(conf *config, sugar *zap.SugaredLogger) (*p2cServer, error) {
 	var err error
 	c := new(p2cServer)
 	c.requests = make(chan *p2cRequest, conf.ChanSize)
 	c.mux = http.NewServeMux()
 	c.conf = conf
+	c.logger = sugar
 
-	c.writer, err = NewP2CWriter(conf, c.requests)
+	c.writer, err = NewP2CWriter(conf, c.requests, sugar)
 	if err != nil {
-		fmt.Printf("Error creating clickhouse writer: %s\n", err.Error())
+		c.logger.Errorf("creating clickhouse writer: %s\n", err.Error())
 		return c, err
 	}
 
-	c.reader, err = NewP2CReader(conf)
+	c.reader, err = NewP2CReader(conf, sugar)
 	if err != nil {
-		fmt.Printf("Error creating clickhouse reader: %s\n", err.Error())
+		c.logger.Errorf("creating clickhouse reader: %s\n", err.Error())
 		return c, err
 	}
 
@@ -160,7 +163,7 @@ func (c *p2cServer) process(req remote.WriteRequest) {
 }
 
 func (c *p2cServer) Start() error {
-	fmt.Println("HTTP server starting...")
+	c.logger.Info("HTTP server starting...")
 	c.writer.Start()
 	return graceful.RunWithErr(c.conf.HTTPAddr, c.conf.HTTPTimeout, c.mux)
 }
@@ -177,10 +180,10 @@ func (c *p2cServer) Shutdown() {
 
 	select {
 	case <-wchan:
-		fmt.Println("Writer shutdown cleanly..")
+		c.logger.Info("Writer shutdown cleanly..")
 	// All done!
 	case <-time.After(10 * time.Second):
-		fmt.Println("Writer shutdown timed out, samples will be lost..")
+		c.logger.Info("Writer shutdown timed out, samples will be lost..")
 	}
 
 }
