@@ -39,7 +39,16 @@ func NewP2CWriter(conf *config, reqs chan *p2cRequest, sugar *zap.SugaredLogger)
 	w.logger = sugar
 	w.db, err = sql.Open("clickhouse", w.conf.ChDSN)
 	if err != nil {
-		w.logger.With(writerContent...).Errorf("connecting to clickhouse: %s\n", err.Error())
+		w.logger.With(writerContent...).Errorf("connecting to clickhouse: %s", err.Error())
+		return w, err
+	}
+
+	if err := w.db.Ping(); err != nil {
+		if exception, ok := err.(*clickhouse.Exception); ok {
+			w.logger.With(writerContent...).Errorf("[%d] %s \n%s\n", exception.Code, exception.Message, exception.StackTrace)
+		} else {
+			w.logger.With(writerContent...).Error(err.Error())
+		}
 		return w, err
 	}
 
@@ -83,7 +92,7 @@ func (w *p2cWriter) Start() {
 
 	go func() {
 		w.wg.Add(1)
-		w.logger.With(writerContent...).Debug("Writer starting..")
+		w.logger.With(writerContent...).Info("Writer starting..")
 		sql := fmt.Sprintf(insertSQL, w.conf.ChDB, w.conf.ChTable)
 		ok := true
 		for ok {
@@ -97,7 +106,7 @@ func (w *p2cWriter) Start() {
 				// get requet and also check if channel is closed
 				req, ok = <-w.requests
 				if !ok {
-					w.logger.With(writerContent...).Debug("Writer stopping..")
+					w.logger.With(writerContent...).Info("Writer stopping..")
 					break
 				}
 				reqs = append(reqs, req)
@@ -112,7 +121,7 @@ func (w *p2cWriter) Start() {
 			// post them to db all at once
 			tx, err := w.db.Begin()
 			if err != nil {
-				w.logger.With(writerContent...).Errorf("begin transaction: %s\n", err.Error())
+				w.logger.With(writerContent...).Errorf("begin transaction: %s", err.Error())
 				w.ko.Add(1.0)
 				continue
 			}
@@ -121,7 +130,7 @@ func (w *p2cWriter) Start() {
 			smt, err := tx.Prepare(sql)
 			for _, req := range reqs {
 				if err != nil {
-					w.logger.With(writerContent...).Errorf("prepare statement: %s\n", err.Error())
+					w.logger.With(writerContent...).Errorf("prepare statement: %s", err.Error())
 					w.ko.Add(1.0)
 					continue
 				}
@@ -133,14 +142,14 @@ func (w *p2cWriter) Start() {
 					req.val, req.ts)
 
 				if err != nil {
-					w.logger.With(writerContent...).Errorf("statement exec: %s\n", err.Error())
+					w.logger.With(writerContent...).Errorf("statement exec: %s", err.Error())
 					w.ko.Add(1.0)
 				}
 			}
 
 			// commit and record metrics
 			if err = tx.Commit(); err != nil {
-				w.logger.With(writerContent...).Errorf("commit failed: %s\n", err.Error())
+				w.logger.With(writerContent...).Errorf("commit failed: %s", err.Error())
 				w.ko.Add(1.0)
 			} else {
 				w.tx.Add(float64(nmetrics))
@@ -148,7 +157,7 @@ func (w *p2cWriter) Start() {
 			}
 
 		}
-		w.logger.With(writerContent...).Debug("Writer stopped..")
+		w.logger.With(writerContent...).Info("Writer stopped..")
 		w.wg.Done()
 	}()
 }
