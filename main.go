@@ -30,6 +30,7 @@ type config struct {
 
 var (
 	versionFlag bool
+	debug       bool
 )
 
 func main() {
@@ -44,7 +45,13 @@ func main() {
 		return
 	}
 
-	logger, _ := zap.NewProduction()
+	var logger *zap.Logger
+	if debug {
+		logger, _ = zap.NewDevelopment()
+	} else {
+		logger, _ = zap.NewProduction()
+	}
+
 	defer logger.Sync() // flushes buffer, if any
 	sugar := logger.Sugar()
 
@@ -68,6 +75,9 @@ func parseFlags() *config {
 
 	// print version?
 	flag.BoolVar(&versionFlag, "version", false, "Version")
+
+	// turn on debug?
+	flag.BoolVar(&debug, "debug", false, "turn on debug mode")
 
 	// clickhouse dsn
 	ddsn := "tcp://127.0.0.1:9000?username=&password=&database=metrics&" +

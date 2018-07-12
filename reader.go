@@ -187,11 +187,11 @@ func (r *p2cReader) Read(req *remote.ReadRequest) (*remote.ReadResponse, error) 
 	rcount := 0
 	for _, q := range req.Queries {
 		// remove me..
-		r.logger.With(readerContent...).Info("\nquery: start: %d, end: %d\n\n", q.StartTimestampMs, q.EndTimestampMs)
+		r.logger.With(readerContent...).Debug("\nquery: start: %d, end: %d\n\n", q.StartTimestampMs, q.EndTimestampMs)
 
 		// get the select sql
 		sqlStr, err = r.getSQL(q)
-		r.logger.With(readerContent...).Info("query: running sql: %s\n\n", sqlStr)
+		r.logger.With(readerContent...).Debug("query: running sql: %s\n\n", sqlStr)
 		if err != nil {
 			r.logger.With(readerContent...).Errorf("reader: getSQL: %s\n", err.Error())
 			return &resp, err
@@ -249,7 +249,7 @@ func (r *p2cReader) Read(req *remote.ReadRequest) (*remote.ReadResponse, error) 
 		resp.Results[0].Timeseries = append(resp.Results[0].Timeseries, ts)
 	}
 
-	r.logger.With(readerContent...).Info("query: returning %d rows for %d queries\n", rcount, len(req.Queries))
+	r.logger.With(readerContent...).Debug("query: returning %d rows for %d queries\n", rcount, len(req.Queries))
 
 	return &resp, nil
 

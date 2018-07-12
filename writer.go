@@ -83,7 +83,7 @@ func (w *p2cWriter) Start() {
 
 	go func() {
 		w.wg.Add(1)
-		w.logger.With(writerContent...).Info("Writer starting..")
+		w.logger.With(writerContent...).Debug("Writer starting..")
 		sql := fmt.Sprintf(insertSQL, w.conf.ChDB, w.conf.ChTable)
 		ok := true
 		for ok {
@@ -97,7 +97,7 @@ func (w *p2cWriter) Start() {
 				// get requet and also check if channel is closed
 				req, ok = <-w.requests
 				if !ok {
-					w.logger.With(writerContent...).Info("Writer stopping..")
+					w.logger.With(writerContent...).Debug("Writer stopping..")
 					break
 				}
 				reqs = append(reqs, req)
@@ -148,7 +148,7 @@ func (w *p2cWriter) Start() {
 			}
 
 		}
-		w.logger.With(writerContent...).Info("Writer stopped..")
+		w.logger.With(writerContent...).Debug("Writer stopped..")
 		w.wg.Done()
 	}()
 }
