@@ -4,9 +4,8 @@ import (
 	"database/sql"
 	"fmt"
 	"sort"
-	"time"
-
 	"sync"
+	"time"
 
 	"github.com/kshvakov/clickhouse"
 	"github.com/prometheus/client_golang/prometheus"

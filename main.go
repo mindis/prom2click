@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"time"
 )
@@ -31,8 +32,6 @@ var (
 )
 
 func main() {
-	excode := 0
-
 	conf := parseFlags()
 
 	if versionFlag {
@@ -41,27 +40,23 @@ func main() {
 		if VersionPrerelease != "" {
 			fmt.Println("Version PreRelease:", VersionPrerelease)
 		}
-		os.Exit(excode)
+		return
 	}
 
 	fmt.Println("Starting up..")
 
 	srv, err := NewP2CServer(conf)
 	if err != nil {
-		fmt.Printf("Error: could not create server: %s\n", err.Error())
-		excode = 1
-		os.Exit(excode)
+		log.Fatalf("Error: could not create server: %s\n", err.Error())
 	}
 	err = srv.Start()
 	if err != nil {
-		fmt.Printf("Error: http server returned error: %s\n", err.Error())
-		excode = 1
+		log.Fatalf("Error: http server returned error: %s\n", err.Error())
 	}
 
 	fmt.Println("Shutting down..")
 	srv.Shutdown()
 	fmt.Println("Exiting..")
-	os.Exit(excode)
 }
 
 func parseFlags() *config {

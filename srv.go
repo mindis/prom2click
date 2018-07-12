@@ -1,11 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
-
-	"fmt"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/snappy"
