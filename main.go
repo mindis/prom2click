@@ -100,12 +100,12 @@ func parseFlags() *config {
 	)
 
 	// clickhouse insertion batch size
-	flag.IntVar(&cfg.ChBatch, "ch.batch", 8192,
+	flag.IntVar(&cfg.ChBatch, "ch.batch", 32768,
 		"Clickhouse write batch size (n metrics).",
 	)
 
 	// channel buffer size between http server => clickhouse writer(s)
-	flag.IntVar(&cfg.ChanSize, "ch.buffer", 8192,
+	flag.IntVar(&cfg.ChanSize, "ch.buffer", 32768,
 		"Maximum internal channel buffer size (n requests).",
 	)
 
