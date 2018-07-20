@@ -193,15 +193,15 @@ func (r *p2cReader) Read(req *remote.ReadRequest) (*remote.ReadResponse, error) 
 	// need to map tags to timeseries to record samples
 	var tsres = make(map[string]*remote.TimeSeries)
 
-	// for debugging/figuring out query format/etc
+	// for Debugfging/figuring out query format/etc
 	rcount := 0
 	for _, q := range req.Queries {
 		// remove me..
-		r.logger.With(readerContent...).Debug("\nquery: start: %d, end: %d", q.StartTimestampMs, q.EndTimestampMs)
+		r.logger.With(readerContent...).Debugf("\nquery: start: %d, end: %d", q.StartTimestampMs, q.EndTimestampMs)
 
 		// get the select sql
 		sqlStr, err = r.getSQL(q)
-		r.logger.With(readerContent...).Debug("query: running sql: %s", sqlStr)
+		r.logger.With(readerContent...).Debugf("query: running sql: %s", sqlStr)
 		if err != nil {
 			r.logger.With(readerContent...).Errorf("reader: getSQL: %s", err.Error())
 			return &resp, err
@@ -259,7 +259,7 @@ func (r *p2cReader) Read(req *remote.ReadRequest) (*remote.ReadResponse, error) 
 		resp.Results[0].Timeseries = append(resp.Results[0].Timeseries, ts)
 	}
 
-	r.logger.With(readerContent...).Debug("query: returning %d rows for %d queries", rcount, len(req.Queries))
+	r.logger.With(readerContent...).Debugf("query: returning %d rows for %d queries", rcount, len(req.Queries))
 
 	return &resp, nil
 
