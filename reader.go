@@ -20,7 +20,7 @@ type p2cReader struct {
 func (r *p2cReader) getTimePeriod(query *remote.Query) (string, string, error) {
 
 	var tselSQL = "SELECT COUNT() AS CNT, (intDiv(toUInt32(ts), %d) * %d) * 1000 as t"
-	var twhereSQL = "WHERE date >= toDate(%d) AND ts >= toDateTime(%d) AND ts <= toDateTime(%d)"
+	var twhereSQL = "WHERE date >= toDate(%d) AND ts >= toDateTime(%d) AND ts <= toDateTime(%d) AND date <= toDate(%d)"
 	var err error
 	tstart := query.StartTimestampMs / 1000
 	tend := query.EndTimestampMs / 1000
@@ -45,7 +45,7 @@ func (r *p2cReader) getTimePeriod(query *remote.Query) (string, string, error) {
 	}
 
 	selectSQL := fmt.Sprintf(tselSQL, taggr, taggr)
-	whereSQL := fmt.Sprintf(twhereSQL, tstart, tstart, tend)
+	whereSQL := fmt.Sprintf(twhereSQL, tstart, tstart, tend, tend)
 
 	return selectSQL, whereSQL, nil
 }
