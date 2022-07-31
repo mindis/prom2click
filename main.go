@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 // a lot of this borrows directly from:
@@ -28,11 +30,10 @@ type config struct {
 
 var (
 	versionFlag bool
+	debug       bool
 )
 
 func main() {
-	excode := 0
-
 	conf := parseFlags()
 
 	if versionFlag {
@@ -41,27 +42,32 @@ func main() {
 		if VersionPrerelease != "" {
 			fmt.Println("Version PreRelease:", VersionPrerelease)
 		}
-		os.Exit(excode)
+		return
 	}
 
-	fmt.Println("Starting up..")
+	var logger *zap.Logger
+	if debug {
+		logger, _ = zap.NewDevelopment()
+	} else {
+		logger, _ = zap.NewProduction()
+	}
 
-	srv, err := NewP2CServer(conf)
+	defer logger.Sync() // flushes buffer, if any
+	sugar := logger.Sugar()
+
+	sugar.Info("Starting up..")
+
+	srv, err := NewP2CServer(conf, sugar)
 	if err != nil {
-		fmt.Printf("Error: could not create server: %s\n", err.Error())
-		excode = 1
-		os.Exit(excode)
+		sugar.Fatalf("could not create server: %s\n", err.Error())
 	}
 	err = srv.Start()
 	if err != nil {
-		fmt.Printf("Error: http server returned error: %s\n", err.Error())
-		excode = 1
+		sugar.Fatalf("http server returned error: %s\n", err.Error())
 	}
-
-	fmt.Println("Shutting down..")
+	sugar.Info("Shutting down..")
 	srv.Shutdown()
-	fmt.Println("Exiting..")
-	os.Exit(excode)
+	sugar.Info("Exiting..")
 }
 
 func parseFlags() *config {
@@ -69,6 +75,9 @@ func parseFlags() *config {
 
 	// print version?
 	flag.BoolVar(&versionFlag, "version", false, "Version")
+
+	// turn on debug?
+	flag.BoolVar(&debug, "debug", false, "turn on debug mode")
 
 	// clickhouse dsn
 	ddsn := "tcp://127.0.0.1:9000?username=&password=&database=metrics&" +
@@ -91,12 +100,12 @@ func parseFlags() *config {
 	)
 
 	// clickhouse insertion batch size
-	flag.IntVar(&cfg.ChBatch, "ch.batch", 8192,
+	flag.IntVar(&cfg.ChBatch, "ch.batch", 32768,
 		"Clickhouse write batch size (n metrics).",
 	)
 
 	// channel buffer size between http server => clickhouse writer(s)
-	flag.IntVar(&cfg.ChanSize, "ch.buffer", 8192,
+	flag.IntVar(&cfg.ChanSize, "ch.buffer", 32768,
 		"Maximum internal channel buffer size (n requests).",
 	)
 

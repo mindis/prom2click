@@ -18,3 +18,5 @@ import:
 - package: gopkg.in/tylerb/graceful.v1
   version: v1.2.15
 - package: github.com/kshvakov/clickhouse
+- package: go.uber.org/zap
+  version: ^1.8.0
